@@ -1,56 +1,143 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import QRCode from 'qrcode.react';
 import './App.css';
-
+import logo from '/Users/federicovazquez/Desktop/portalGUB/portalFrontend/src/Gub.uy_.png';
+import validadoImg from '/Users/federicovazquez/Desktop/portalGUB/portalFrontend/src/validado.png'; // Importa la imagen de validado
+import denegadoImg from '/Users/federicovazquez/Desktop/portalGUB/portalFrontend/src/denegado.png'; // Importa la imagen de denegado
 
 function App() {
   const [cedula, setCedula] = useState('');
   const [codigoGenerado, setCodigoGenerado] = useState(null);
   const [error, setError] = useState(null);
-  const [qrBase64, setQrBase64] = useState(null);
+  const [qrData, setQrData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [validationResult, setValidationResult] = useState(null);
 
   const handleInputChange = (event) => {
     setCedula(event.target.value);
   };
 
   const generarCodigoQR = async () => {
+    if (!cedula) {
+      setError('Por favor, ingrese su número de cédula.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setCodigoGenerado(null);
+
     try {
-      const response = await axios.post('http://127.0.0.1:8000/generar_qr', { cedula });
+      const response = await axios.post('https://5lw7slyaa0.execute-api.us-east-2.amazonaws.com/dev/generarQR', { cedula });
       console.log(response.data);
-      if (response.data.qr_base64) {
-        setQrBase64(response.data.qr_base64); // Guarda el código QR en formato base64
+      const responseBody = JSON.parse(response.data.body);
+      if (responseBody.response) {
+        const qrString = `cedula: ${responseBody.response.cedula}, challengeId: ${responseBody.response.challengeId}, url: ${responseBody.response.url}`;
+        setQrData(qrString); // Guarda los datos del QR como una cadena
         setCodigoGenerado(true);
-        setError(null);
       } else {
         setError('No se pudo generar el código QR. Inténtalo de nuevo.');
-        setCodigoGenerado(null);
       }
     } catch (error) {
       console.error('Error al generar el código QR:', error);
       setError('Error al generar el código QR. Inténtalo de nuevo.');
-      setCodigoGenerado(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleValidationComplete = async () => {
+    try {
+      const challengeId = qrData.split('challengeId: ')[1].split(',')[0];
+      const response = await axios.get('https://5lw7slyaa0.execute-api.us-east-2.amazonaws.com/dev/checkState', {
+        params: { challenge_id: challengeId },
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Validation response:', response.data); // Imprime la respuesta completa
+      const responseBody = response.data; // La respuesta ya está en formato JSON
+      if (responseBody.status) {
+        console.log('Estado de validación:', responseBody.status);
+        setValidationResult(responseBody.status); // Guarda el resultado de la validación
+      } else {
+        setError('No se pudo obtener el estado de la validación. Inténtalo de nuevo.');
+      }
+    } catch (error) {
+      console.error('Error al validar el usuario:', error);
+      setError('Error al validar el usuario. Inténtalo de nuevo.');
+    }
+  };
+
+  const getValidationMessage = () => {
+    switch (validationResult) {
+      case 'Pending':
+        return 'Proceso en curso';
+      case 'Validado':
+        return 'Usuario Validado';
+      case 'Denegado':
+        return 'Usuario Denegado';
+      default:
+        return '';
+    }
+  };
+
+  const getValidationImage = () => {
+    switch (validationResult) {
+      case 'Validado':
+        return <img src={validadoImg} alt="Validado" className="status-image" />;
+      case 'Denegado':
+        return <img src={denegadoImg} alt="Denegado" className="status-image" />;
+      default:
+        return null;
     }
   };
 
   return (
-      <div className="App">
-        <h1>Bienvenido al portal</h1>
-        <input
-            type="text"
-            value={cedula}
-            onChange={handleInputChange}
-            placeholder="Ingrese su número de cédula"
-        />
-        <button onClick={generarCodigoQR}>Generar Código QR</button>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        {codigoGenerado && qrBase64 && (
-            <div>
-              <p>Diríjase a la app de Agesic y escanee el código QR:</p>
-              {/* Mostrar el código QR como una imagen base64 */}
-              <img src={`data:image/png;base64,${qrBase64}`} alt="Código QR" />
+    <div className="App-container">
+      <img src={logo} alt="Gub.uy Logo" className="logo" />
+      <div className="content">
+        {validationResult === 'Validado' || validationResult === 'Denegado' ? (
+          <div className="validation-result">
+            {getValidationImage()}
+            <h2>{getValidationMessage()}</h2>
+          </div>
+        ) : (
+          <>
+            <h1>Bienvenido al portal</h1>
+            <div className="input-container">
+              <input
+                type="text"
+                value={cedula}
+                onChange={handleInputChange}
+                placeholder="Ingrese su número de cédula"
+              />
+              <div className="button-group">
+                <button onClick={generarCodigoQR} disabled={loading}>
+                  {loading ? 'Generando...' : 'Generar Código QR'}
+                </button>
+                {codigoGenerado && (
+                  <button onClick={handleValidationComplete}>
+                    Validación Completada
+                  </button>
+                )}
+              </div>
             </div>
+            {error && <p className="error">{error}</p>}
+            {codigoGenerado && qrData && (
+              <div className="qr-container">
+                <p>Diríjase a la app de Agesic y escanee el código QR:</p>
+                <QRCode value={qrData} className="qr-image" />
+                {validationResult === 'Pending' && (
+                  <p className="pending-message">Proceso en curso</p>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
+    </div>
   );
 }
 

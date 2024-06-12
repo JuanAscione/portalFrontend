@@ -7,21 +7,40 @@ body {
 }
 
 .App {
+  text-align: center;
+  padding-top: 20px;
+}
+
+.logo {
+  width: 100%; /* Ajusta este valor para hacer la imagen más grande */
   max-width: 500px;
-  margin: 50px auto;
+  margin: 0 auto 20px;
+  display: block;
+  border-radius: 10px;
+}
+
+.content {
+  max-width: 500px;
+  margin: 20px auto;
   padding: 20px;
   background-color: #ffffff;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Title Styles */
 h1 {
-  text-align: center;
   color: #333;
   margin-bottom: 20px;
 }
 
 /* Input Field Styles */
+.input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 input[type="text"] {
   width: 100%;
   padding: 10px;
@@ -31,6 +50,13 @@ input[type="text"] {
 }
 
 /* Button Styles */
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
 button {
   background-color: #007bff;
   color: #fff;
@@ -39,10 +65,16 @@ button {
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  flex: 1; /* This makes both buttons occupy equal space */
 }
 
 button:hover {
   background-color: #0056b3;
+}
+
+button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 }
 
 /* Error Message Styles */
@@ -61,4 +93,34 @@ button:hover {
   width: 200px;
   height: 200px;
   margin: 0 auto;
+}
+
+/* Validation Result Styles */
+.validation-result {
+  text-align: center;
+  padding: 20px;
+  border-radius: 10px;
+  color: #fff;
+}
+
+.validation-result.validado {
+  background-color: #28a745;
+}
+
+.validation-result.pendiente {
+  background-color: #ffc107;
+}
+
+.validation-result.denegado {
+  background-color: #dc3545;
+}
+.status-image {
+  width: 300px;
+  height: 300px;
+  margin: 20px auto;
+}
+
+.pending-message {
+  color: red;
+  font-weight: bold;
 }
