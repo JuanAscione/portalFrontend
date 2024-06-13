@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import QRCode from 'qrcode.react';
 import './App.css';
-import logo from '/Users/federicovazquez/Desktop/portalGUB/portalFrontend/src/Gub.uy_.png';
-import validadoImg from '/Users/federicovazquez/Desktop/portalGUB/portalFrontend/src/validado.png'; // Importa la imagen de validado
-import denegadoImg from '/Users/federicovazquez/Desktop/portalGUB/portalFrontend/src/denegado.png'; // Importa la imagen de denegado
+import logo from './Gub.uy_.png';
+import validadoImg from './validado.png'; // Importa la imagen de validado
+import denegadoImg from './denegado.png'; // Importa la imagen de denegado
 
 function App() {
   const [cedula, setCedula] = useState('');
@@ -12,6 +12,8 @@ function App() {
   const [error, setError] = useState(null);
   const [qrData, setQrData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [shouldShowButton, setShouldShowButton] = useState(true); // Booleano para controlar la visibilidad del botón
+
   const [validationResult, setValidationResult] = useState(null);
 
   const handleInputChange = (event) => {
@@ -43,11 +45,13 @@ function App() {
       console.error('Error al generar el código QR:', error);
       setError('Error al generar el código QR. Inténtalo de nuevo.');
     } finally {
+      setShouldShowButton(false);
       setLoading(false);
     }
   };
 
   const handleValidationComplete = async () => {
+    setLoading(true);
     try {
       const challengeId = qrData.split('challengeId: ')[1].split(',')[0];
       const response = await axios.get('https://5lw7slyaa0.execute-api.us-east-2.amazonaws.com/dev/checkState', {
@@ -67,6 +71,8 @@ function App() {
     } catch (error) {
       console.error('Error al validar el usuario:', error);
       setError('Error al validar el usuario. Inténtalo de nuevo.');
+    }finally {
+      setLoading(false);
     }
   };
 
@@ -86,9 +92,9 @@ function App() {
   const getValidationImage = () => {
     switch (validationResult) {
       case 'Validado':
-        return <img src={validadoImg} alt="Validado" className="status-image" />;
+        return (<div><img src={validadoImg} alt="Validado" className="status-image" /><p className="validated-message">El usuario ha sido validado con éxito</p></div>);
       case 'Denegado':
-        return <img src={denegadoImg} alt="Denegado" className="status-image" />;
+        return (<div><img src={denegadoImg} alt="Denegado" className="status-image" /><p className="pending-message">Error en la validación</p></div>);
       default:
         return null;
     }
@@ -112,15 +118,13 @@ function App() {
                 value={cedula}
                 onChange={handleInputChange}
                 placeholder="Ingrese su número de cédula"
+                disabled={!shouldShowButton}
               />
               <div className="button-group">
-                <button onClick={generarCodigoQR} disabled={loading}>
-                  {loading ? 'Generando...' : 'Generar Código QR'}
-                </button>
-                {codigoGenerado && (
-                  <button onClick={handleValidationComplete}>
-                    Validación Completada
-                  </button>
+                {shouldShowButton && (
+                    <button onClick={generarCodigoQR} disabled={loading}>
+                      {loading ? 'Generando...' : 'Generar Código QR'}
+                    </button>
                 )}
               </div>
             </div>
@@ -132,6 +136,13 @@ function App() {
                 {validationResult === 'Pending' && (
                   <p className="pending-message">Proceso en curso</p>
                 )}
+                <div className="buttonbottom-group">
+                  {codigoGenerado && (
+                      <button onClick={handleValidationComplete} disabled={loading}>
+                        {loading ? 'Validando...' : 'Validacion Completada'}
+                      </button>
+                  )}
+                </div>
               </div>
             )}
           </>

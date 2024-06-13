@@ -2,7 +2,7 @@
 body {
   font-family: sans-serif;
   background-color: #25478f;
-  margin: 0;
+  margin: 15px;
   padding: 0;
 }
 
@@ -21,17 +21,18 @@ body {
 
 .content {
   max-width: 500px;
-  margin: 20px auto;
-  padding: 20px;
   background-color: #ffffff;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin: 10px auto 20px;
+  padding: 1px 20px 20px;
 }
 
 /* Title Styles */
 h1 {
   color: #333;
   margin-bottom: 20px;
+  text-align: center;
 }
 
 /* Input Field Styles */
@@ -55,6 +56,14 @@ input[type="text"] {
   justify-content: space-between;
   gap: 10px;
   width: 100%;
+}
+
+.buttonbottom-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  margin-top: 10px;
 }
 
 button {
@@ -122,5 +131,10 @@ button:disabled {
 
 .pending-message {
   color: red;
+  font-weight: bold;
+}
+
+.validated-message {
+  color: #28a745;
   font-weight: bold;
 }
