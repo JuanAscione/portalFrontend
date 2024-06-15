@@ -39,7 +39,7 @@ function App() {
         setQrData(qrString); // Guarda los datos del QR como una cadena
         setCodigoGenerado(true);
       } else {
-        setError('No se pudo generar el código QR. Inténtalo de nuevo.');
+        setError('No se pudo generar el código QR. Por favor ingrese un número de cédula válido.');
       }
     } catch (error) {
       console.error('Error al generar el código QR:', error);
@@ -51,7 +51,6 @@ function App() {
   };
 
   const handleValidationComplete = async () => {
-    setLoading(true);
     try {
       const challengeId = qrData.split('challengeId: ')[1].split(',')[0];
       const response = await axios.get('https://5lw7slyaa0.execute-api.us-east-2.amazonaws.com/dev/checkState', {
@@ -71,8 +70,6 @@ function App() {
     } catch (error) {
       console.error('Error al validar el usuario:', error);
       setError('Error al validar el usuario. Inténtalo de nuevo.');
-    }finally {
-      setLoading(false);
     }
   };
 
@@ -92,9 +89,9 @@ function App() {
   const getValidationImage = () => {
     switch (validationResult) {
       case 'Validado':
-        return (<div><img src={validadoImg} alt="Validado" className="status-image" /><p className="validated-message">El usuario ha sido validado con éxito</p></div>);
+        return <img src={validadoImg} alt="Validado" className="status-image" />;
       case 'Denegado':
-        return (<div><img src={denegadoImg} alt="Denegado" className="status-image" /><p className="pending-message">Error en la validación</p></div>);
+        return <img src={denegadoImg} alt="Denegado" className="status-image" />;
       default:
         return null;
     }
@@ -118,13 +115,15 @@ function App() {
                 value={cedula}
                 onChange={handleInputChange}
                 placeholder="Ingrese su número de cédula"
-                disabled={!shouldShowButton}
               />
               <div className="button-group">
-                {shouldShowButton && (
-                    <button onClick={generarCodigoQR} disabled={loading}>
-                      {loading ? 'Generando...' : 'Generar Código QR'}
-                    </button>
+                <button onClick={generarCodigoQR} disabled={loading}>
+                  {loading ? 'Generando...' : 'Generar Código QR'}
+                </button>
+                {codigoGenerado && (
+                  <button onClick={handleValidationComplete}>
+                    Validación Completada
+                  </button>
                 )}
               </div>
             </div>
@@ -136,13 +135,6 @@ function App() {
                 {validationResult === 'Pending' && (
                   <p className="pending-message">Proceso en curso</p>
                 )}
-                <div className="buttonbottom-group">
-                  {codigoGenerado && (
-                      <button onClick={handleValidationComplete} disabled={loading}>
-                        {loading ? 'Validando...' : 'Validacion Completada'}
-                      </button>
-                  )}
-                </div>
               </div>
             )}
           </>
